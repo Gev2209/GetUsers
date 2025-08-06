@@ -12,7 +12,13 @@ const writeFiles = (res,status,writeObj,conType) => {
     res.end()
     return res
 }
+
+const error404 = async (res) => {
+    const html = await readFile('pages', 'error.html');
+    writeFiles(res, 404, html, 'text/html');
+}
 module.exports = {
     readFile,
-    writeFiles
+    writeFiles,
+    error404
 }
