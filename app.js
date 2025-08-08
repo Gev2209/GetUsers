@@ -1,7 +1,6 @@
-const { writeFiles, error404 } = require('./helpers/readFile');
+const { writeFiles, error404, putObj } = require('./helpers/readFile');
 const { readFile } = require('./helpers/readFile');
 const http = require('http');
-const url = require('url');
 const path = require('path');
 const fs = require('fs').promises
 
@@ -44,8 +43,9 @@ const server = http.createServer(async (req, res) => {
     } else if (req.url.match(/^\/api\/users\?age=([0-9a-zA-Z]+)$/) && req.method === 'GET') {
         const users = await JSON.parse(await readFile('db', 'users.json'))
         const query = path.basename(req.url).split('=');
-        const age = query[1]
+        const age = query[1]        
         let sortedAge = [...users]
+
         if (age === 'min') {
             sortedAge = sortedAge.toSorted((a,b) => a.age - b.age)
         } else if (age === 'max') {
@@ -80,7 +80,7 @@ const server = http.createServer(async (req, res) => {
                 return;
             }
             findedUser.name = body.name
-            fs.unlink(path.join(__dirname, 'db', 'users.json'), (err) => { console.log(err) });
+            await fs.unlink(path.join(__dirname, 'db', 'users.json'), (err) => { console.log(err) });
             fs.appendFile(path.join(__dirname, 'db', 'users.json'), JSON.stringify(users))
             res.end(JSON.stringify(users))
         })
@@ -89,15 +89,17 @@ const server = http.createServer(async (req, res) => {
         req.on('data', async (chunk) => {
             let body = JSON.parse(chunk.toString());
             const users = await JSON.parse(await readFile('db', 'users.json'))
-            const findedUser = users.find((e) => e.id === id)
+            const findedUser = users.findIndex((e) => e.id === id)
+
             if (!findedUser) {
-                error404(res)
-                return;
+                users.push(body)
+                putObj(users,'db','users.json',res)
+            } else {
+                // Object.assign(findedUser,body)
+                users[findedUser] = body
+                putObj(users,'db','users.json',res)
             }
-            Object.assign(findedUser,body)
-            fs.unlink(path.join(__dirname, 'db', 'users.json'), (err) => { console.log(err) });
-            fs.appendFile(path.join(__dirname, 'db', 'users.json'), JSON.stringify(users))
-            res.end(JSON.stringify(users))
+            
         })
     } else if (req.url.match(/^\/api\/users\/([0-9]+)$/) && req.method === "DELETE") {
 

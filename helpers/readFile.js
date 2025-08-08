@@ -16,8 +16,15 @@ const error404 = async (res) => {
     const html = await readFile('pages', 'error.html');
     writeFiles(res, 404, html, 'text/html');
 }
+
+const putObj = async (obj,folder,file,res) => {
+    await fs.unlink(path.join(__dirname, '..', folder, file), (err) => { console.log(err) });
+    fs.appendFile(path.join(__dirname, '..', folder, file), JSON.stringify(obj))
+    res.end(JSON.stringify(obj))
+}
 module.exports = {
     readFile,
     writeFiles,
-    error404
+    error404,
+    putObj
 }
