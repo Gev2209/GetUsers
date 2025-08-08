@@ -10,7 +10,6 @@ const writeFiles = (res,status,writeObj,conType) => {
     res.writeHead(status, { 'content-type': conType});
     res.write(writeObj);
     res.end()
-    return res
 }
 
 const error404 = async (res) => {
