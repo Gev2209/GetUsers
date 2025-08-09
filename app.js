@@ -43,7 +43,7 @@ const server = http.createServer(async (req, res) => {
     } else if (req.url.match(/^\/api\/users\?age=([0-9a-zA-Z]+)$/) && req.method === 'GET') {
         const users = await JSON.parse(await readFile('db', 'users.json'))
         const query = path.basename(req.url).split('=');
-        const age = query[1]        
+        const age = query[1]
         let sortedAge = [...users]
 
         if (age === 'min') {
@@ -53,6 +53,32 @@ const server = http.createServer(async (req, res) => {
         } else {
             writeFiles(res, 404, JSON.stringify({message:'Not allow'}),'application/json')
         }
+        writeFiles(res,200,JSON.stringify(sortedAge),'application/json')
+    } else if (req.url.match(/^\/api\/users\?(?:.*&)?age=([0-9a-zA-Z]+)(?:&.*)?$/) && req.method === 'GET') {
+    const users = await JSON.parse(await readFile('db', 'users.json'))
+
+    const queryString = req.url.split('?')[1];
+    const params = {};
+    queryString.split('&').forEach(pair => {
+        const [key, value] = pair.split('=');
+        params[key] = value;
+    });
+
+        const name = params.name;
+        const age = params.age;
+
+        if (name) {
+        sortedAge = users.filter(user => user.name.toLowerCase().indexOf(name.toLowerCase()) > -1);
+        }
+
+        if (age === 'min') {
+            sortedAge = sortedAge.toSorted((a,b) => a.age - b.age)
+        } else if (age === 'max') {
+            sortedAge = sortedAge.toSorted((a,b) => b.age - a.age)
+        } else {
+            writeFiles(res, 404, JSON.stringify({message:'Not allow'}),'application/json')
+        }
+
         writeFiles(res,200,JSON.stringify(sortedAge),'application/json')
     } else if (req.url === '/api/users' && req.method === "POST") {
         req.on('data', async (chunk) => {
